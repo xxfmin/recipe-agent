@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field, field_validator
 
 class NutritionInfo(BaseModel):
@@ -29,6 +29,12 @@ class RecipeDetails(BaseModel):
     ingredients: List[Ingredient] = Field(default_factory=list)
     summary: str = ""
     analyzedInstructions: List[InstructionStep] = Field(default_factory=list)
+
+    # fields for ingredient-based search results
+    usedIngredients: Optional[List[Dict[str, Any]]] = None
+    missedIngredients: Optional[List[Dict[str, Any]]] = None
+    usedIngredientCount: Optional[int] = None
+    missedIngredientCount: Optional[int] = None
 
     @field_validator('nutrition', mode='before')
     def extract_nutrients(cls, v):
