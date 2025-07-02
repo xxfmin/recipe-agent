@@ -1,0 +1,1 @@
+"""Recipe Assistant - AI-powered recipe finder"""
