@@ -105,5 +105,5 @@ async def get_recipe_details_for_ingredient_search(ctx: RunContext[Deps]) -> str
                 detail.missed_ingredients = result.get('missedIngredients', [])
                 break
 
-    ctx.deps.recipe_details = result
+    ctx.deps.recipe_details = details
     return f"Retrieved details for {len(details)} recipes"
