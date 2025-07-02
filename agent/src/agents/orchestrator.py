@@ -1,4 +1,4 @@
-from pydantic_ai import Agent, RunContext
+from pydantic_ai import Agent
 from pydantic_ai.models.gemini import GeminiModel
 
 from ..workflows.query_workflow import search_recipes_by_query
