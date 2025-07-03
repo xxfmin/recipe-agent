@@ -3,8 +3,6 @@ import User from "@/models/user";
 import bcrypt from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
 
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 export async function POST(request: NextRequest) {
   try {
     const { name, email, password } = await request.json();
