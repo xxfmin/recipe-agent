@@ -128,11 +128,11 @@ const Logo = ({ onLogoClick }: { onLogoClick: () => void }) => {
       onClick={onLogoClick}
       className="relative z-20 flex items-center space-x-2 py-1 text-sm font-normal text-black cursor-pointer"
     >
-      <IconChefHat className="h-6 w-6 shrink-0 text-neutral-700" />
+      <IconChefHat className="h-8 w-8 shrink-0 text-neutral-700" />
       <motion.span
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="font-medium whitespace-pre text-black"
+        className="font-medium whitespace-pre text-black text-xl"
       >
         Sous
       </motion.span>
