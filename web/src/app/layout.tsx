@@ -2,6 +2,8 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import type { Metadata } from "next";
 import "./globals.css";
 
+import { SessionWrapper } from "@/components/SessionWrapper";
+
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800"],
@@ -20,7 +22,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={plusJakartaSans.variable}>
-      <body className="font-sans">{children}</body>
+      <body className="font-sans">
+        <SessionWrapper>{children}</SessionWrapper>
+      </body>
     </html>
   );
 }
