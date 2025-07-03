@@ -2,7 +2,7 @@ import Image from "next/image";
 
 export const Hero = () => {
   return (
-    <section className="h-screen w-full bg-white overflow-hidden px-8 pb-8 pt-16">
+    <section className="h-screen w-full overflow-hidden px-8 pb-8 pt-16">
       {/* image */}
       <div className="relative h-full w-full border rounded-3xl overflow-hidden">
         <Image
@@ -23,10 +23,9 @@ export const Hero = () => {
             <h1 className="text-5xl md:text-7xl font-bold text-white mb-6">
               Welcome to Sous
             </h1>
-            <p className="text-lg md:text-xl text-white/90 max-w-2xl leading-relaxed">
-              Your ultimate travel companion that makes planning trips
-              effortless, coordinates group adventures, and helps you discover
-              amazing places to eat.
+            <p className="text-lg md:text-xl text-white/90 max-w-2xl pl-3">
+              Turn ingredients into meals and cravings into reality with a
+              recipe assistant that works with what you have or what you want.
             </p>
           </div>
         </div>
