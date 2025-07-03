@@ -12,7 +12,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: "Sous",
-  description: "Your ultimate travel companion",
+  description: "Your ultimate cooking agent",
 };
 
 export default function RootLayout({
