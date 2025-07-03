@@ -1,7 +1,9 @@
+"use client";
+
 export default function Dashboard() {
   return (
-    <div>
-      <h1>Dashboard</h1>
+    <div className="h-full w-full">
+      <h1>Welcome</h1>
     </div>
   );
 }
