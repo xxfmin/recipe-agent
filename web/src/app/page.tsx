@@ -7,9 +7,7 @@ export default function Home() {
     <div className="min-h-screen bg-stone-100 ">
       <Navbar />
       <Hero />
-      <div className="max-w-6xl mx-auto py-16 px-8 space-y-8">
-        <MeaningAndMission />
-      </div>
+      <MeaningAndMission />
     </div>
   );
 }

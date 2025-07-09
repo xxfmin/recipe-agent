@@ -1,47 +1,30 @@
-import { BookOpen, Goal } from "lucide-react";
-
 export const MeaningAndMission = () => {
   return (
-    <div className="relative w-full max-w-6xl mx-auto bg-stone-300 backdrop-blur-md rounded-3xl p-10 shadow-xl">
-      <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
-        {/* Definition Section */}
-        <div className="lg:w-1/3">
-          <div className="flex items-center gap-3 mb-6">
-            <BookOpen className="text-zinc-600" size={24} />
-            <h2 className="text-2xl font-semibold text-zinc-800">
-              Sous
-              <span className="text-lg font-medium text-zinc-500 ml-2">
-                /so͞o/
-              </span>
-            </h2>
+    <section className="bg-[#e8e5e0] py-16">
+      <div className="max-w-6xl mx-auto px-6 md:px-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+          {/* left */}
+          <div className="relative max-w-md mx-auto bg-black rounded-3xl shadow-xl p-8">
+            <h3 className="text-4xl font-semibold text-white mb-2">Sous</h3>
+            <p className="italic text-stone-300 mb-4">/so͞o/</p>
+            <p className="text-stone-200 leading-relaxed">
+              From French <em>'sous chef'</em>, the chef's trusted assistant who
+              must be versatile, creative, and equipped to lead.
+            </p>
           </div>
 
-          <p className="text-base text-zinc-700 leading-relaxed tracking-tight">
-            From French <span className="italic">"sous chef"</span>, the chef's
-            trusted assistant who must be versatile, creative, and equipped to
-            lead.
-          </p>
-        </div>
-
-        {/* Vertical Divider */}
-        <div className="hidden lg:block w-px bg-stone-500 self-stretch"></div>
-
-        {/* Mission Section */}
-        <div className="lg:w-2/3">
-          <div className="flex items-center gap-3 mb-6">
-            <Goal className="text-zinc-600" size={24} />
-            <h2 className="text-2xl font-semibold text-zinc-800">
-              Our Mission
+          {/* right */}
+          <div className="space-y-6 text-black">
+            <h2 className="text-4xl font-bold leading-tight">
+              Smart, intuitive support for everyday cooking
             </h2>
+            <p className="text-lg leading-relaxed text-stone-800">
+              From planning to plating, Sous helps you turn what you have into
+              what you crave. No stress, no guesswork, just good food made easy.
+            </p>
           </div>
-
-          <p className="text-lg text-zinc-700 leading-relaxed tracking-tight">
-            Just like a sous chef in a professional kitchen, our AI agent is
-            your trusted culinary companion. We believe cooking should be
-            accessible, creative, and tailored to you.
-          </p>
         </div>
       </div>
-    </div>
+    </section>
   );
 };
