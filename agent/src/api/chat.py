@@ -4,12 +4,10 @@ from typing import AsyncGenerator
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from httpx import AsyncClient
-from pydantic_ai import RunContext
 
 from ..models.chat import ChatMessage, StreamResponse
 from ..models.deps import Deps
 from ..agents.orchestrator import orchestrator
-from ..workflows import image_workflow, query_workflow
 from ..config import config
 
 router = APIRouter()
@@ -33,14 +31,25 @@ async def chat_endpoint(body: ChatMessage):
                     user_query=body.message,
                 )
 
-                # create context for workflow functions
-                ctx = RunContext(deps=deps)
-
                 if deps.has_image:
                     # IMAGE WORKFLOW
                     logfire.info("Starting image workflow")
 
-                    # 1) analyze fridge image
+                    # Use the orchestrator agent to run the workflow
+                    prompt = """
+                    Analyze the fridge image and find recipes using these steps:
+                    1. Use analyze_fridge_image to extract ingredients
+                    2. Use format_ingredients_for_search to prepare them
+                    3. Use search_recipes_by_ingredients to find recipes
+                    4. Use get_recipe_details_for_ingredient_search to get full details
+                    
+                    Send progress updates as you complete each step.
+                    """
+                    
+                    # Since we need to stream updates, we'll manually orchestrate the workflow
+                    # but calling the functions through the deps service methods
+                    
+                    # 1) Analyze fridge image
                     response = StreamResponse(
                         type="step",
                         step="analyze_image",
@@ -48,28 +57,25 @@ async def chat_endpoint(body: ChatMessage):
                         message="Analyzing your fridge contents..."
                     )
                     yield response.model_dump_json() + "\n"
+                    
                     try:
-                        result = await image_workflow.analyze_fridge_image(ctx)
-
-                        if "No" in result or "error" in result.lower():
-                            error_response = StreamResponse(
-                                type="error",
-                                step="analyze_image",
-                                message=result
-                            )
-                            yield error_response.model_dump_json() + "\n"
-                            return
+                        extracted = await deps.gemini.extract_ingredients_from_image(
+                            deps.image_base64
+                        )
+                        deps.extracted_ingredients = extracted
+                        
                         complete_response = StreamResponse(
                             type="step",
-                            step="analyzie_image",
+                            step="analyze_image",
                             status="complete",
-                            message=result,
+                            message=f"Found {len(extracted.ingredients)} ingredients",
                             data={
-                                "ingredients_count": len(deps.extracted_ingredients.ingredients) if deps.extracted_ingredients else 0,
-                                "ingredients": deps.extracted_ingredients.ingredients[:10] if deps.extracted_ingredients else []
+                                "ingredients_count": len(extracted.ingredients),
+                                "ingredients": extracted.ingredients[:10]
                             }
                         )
                         yield complete_response.model_dump_json() + "\n"
+                        
                     except Exception as e:
                         error_response = StreamResponse(
                             type="error",
@@ -79,7 +85,7 @@ async def chat_endpoint(body: ChatMessage):
                         yield error_response.model_dump_json() + "\n"
                         return
                     
-                    # 2) format ingredients
+                    # 2) Format ingredients
                     format_response = StreamResponse(
                         type="step",
                         step="format_ingredients",
@@ -89,13 +95,18 @@ async def chat_endpoint(body: ChatMessage):
                     yield format_response.model_dump_json() + "\n"
                     
                     try:
-                        result = await image_workflow.format_ingredients_for_search(ctx)
+                        # Use the formatter agent
+                        from ..agents.formatter import formatter_agent
+                        result = await formatter_agent.run(
+                            f"Format these ingredients: {', '.join(extracted.ingredients)}"
+                        )
+                        deps.formatted_ingredients = result.data.ingredients
                         
                         complete_response = StreamResponse(
                             type="step",
                             step="format_ingredients",
                             status="complete",
-                            message=result
+                            message="Ingredients formatted successfully"
                         )
                         yield complete_response.model_dump_json() + "\n"
                         
@@ -108,7 +119,7 @@ async def chat_endpoint(body: ChatMessage):
                         yield error_response.model_dump_json() + "\n"
                         return
                     
-                    # 3) search recipes
+                    # 3) Search recipes
                     search_response = StreamResponse(
                         type="step",
                         step="search_recipes",
@@ -118,9 +129,12 @@ async def chat_endpoint(body: ChatMessage):
                     yield search_response.model_dump_json() + "\n"
                     
                     try:
-                        result = await image_workflow.search_recipes_by_ingredients(ctx)
+                        results = await deps.spoonacular.search_by_ingredients(
+                            deps.formatted_ingredients
+                        )
+                        deps.ingredient_search_results = results
                         
-                        if deps.ingredient_search_results and len(deps.ingredient_search_results) == 0:
+                        if len(results) == 0:
                             final_response = StreamResponse(
                                 type="complete",
                                 message="No recipes found with those ingredients. Try adding more ingredients or using different ones.",
@@ -133,7 +147,10 @@ async def chat_endpoint(body: ChatMessage):
                             type="step",
                             step="search_recipes",
                             status="complete",
-                            message=result
+                            message=f"Found {len(results)} recipes",
+                            data={
+                                "recipe_count": len(results)
+                            }
                         )
                         yield complete_response.model_dump_json() + "\n"
                         
@@ -146,7 +163,7 @@ async def chat_endpoint(body: ChatMessage):
                         yield error_response.model_dump_json() + "\n"
                         return
                     
-                    # 4) get recipe details
+                    # 4) Get recipe details
                     details_response = StreamResponse(
                         type="step",
                         step="get_details",
@@ -156,40 +173,44 @@ async def chat_endpoint(body: ChatMessage):
                     yield details_response.model_dump_json() + "\n"
                     
                     try:
-                        result = await image_workflow.get_recipe_details_for_ingredient_search(ctx)
+                        recipe_ids = [r['id'] for r in results]
+                        details = await deps.spoonacular.get_recipe_details_bulk(recipe_ids)
                         
-                        # prepare final response
-                        if deps.recipe_details:
-                            recipe_dicts = []
-                            for recipe in deps.recipe_details:
-                                recipe_dict = recipe.model_dump()
-                                recipe_dicts.append(recipe_dict)
+                        # Map search results to enhance with ingredient match info
+                        search_results_map = {r['id']: r for r in results}
+                        enhanced_recipes = []
+                        
+                        for recipe in details:
+                            recipe_dict = recipe.model_dump()
                             
-                            # sort by used ingredients count (best matches first)
-                            recipe_dicts.sort(
-                                key=lambda r: r.get('usedIngredientCount', 0), 
-                                reverse=True
-                            )
+                            # Add ingredient match info
+                            if recipe.id in search_results_map:
+                                search_result = search_results_map[recipe.id]
+                                recipe_dict['usedIngredients'] = search_result.get('usedIngredients', [])
+                                recipe_dict['missedIngredients'] = search_result.get('missedIngredients', [])
+                                recipe_dict['usedIngredientCount'] = search_result.get('usedIngredientCount', 0)
+                                recipe_dict['missedIngredientCount'] = search_result.get('missedIngredientCount', 0)
                             
-                            final_response = StreamResponse(
-                                type="complete",
-                                message=f"Found {len(recipe_dicts)} delicious recipes you can make with your ingredients!",
-                                recipes=recipe_dicts,
-                                summary={
-                                    "total_ingredients_found": len(deps.extracted_ingredients.ingredients) if deps.extracted_ingredients else 0,
-                                    "ingredients_used_for_search": deps.formatted_ingredients,
-                                    "total_recipes": len(recipe_dicts)
-                                }
-                            )
-                            yield final_response.model_dump_json() + "\n"
-                        else:
-                            final_response = StreamResponse(
-                                type="complete",
-                                message="Unable to get recipe details. Please try again.",
-                                recipes=[]
-                            )
-                            yield final_response.model_dump_json() + "\n"
-                            
+                            enhanced_recipes.append(recipe_dict)
+                        
+                        # Sort by used ingredients count
+                        enhanced_recipes.sort(
+                            key=lambda r: r.get('usedIngredientCount', 0), 
+                            reverse=True
+                        )
+                        
+                        final_response = StreamResponse(
+                            type="complete",
+                            message=f"Found {len(enhanced_recipes)} delicious recipes you can make with your ingredients!",
+                            recipes=enhanced_recipes,
+                            summary={
+                                "total_ingredients_found": len(extracted.ingredients),
+                                "ingredients_used_for_search": deps.formatted_ingredients,
+                                "total_recipes": len(enhanced_recipes)
+                            }
+                        )
+                        yield final_response.model_dump_json() + "\n"
+                        
                     except Exception as e:
                         error_response = StreamResponse(
                             type="error",
@@ -201,7 +222,7 @@ async def chat_endpoint(body: ChatMessage):
                     
                 elif deps.user_query:
                     # QUERY WORKFLOW
-                    logfire.info(f"Starting query workflo for: {deps.user_query}")
+                    logfire.info(f"Starting query workflow for: {deps.user_query}")
 
                     search_response = StreamResponse(
                         type="step",
@@ -212,14 +233,20 @@ async def chat_endpoint(body: ChatMessage):
                     yield search_response.model_dump_json() + "\n"
 
                     try:
-                        result = await query_workflow.search_recipes_by_query(ctx)
-
-                        if deps.recipe_details:
-                            recipe_dicts = [recipe.model_dump() for recipe in deps.recipe_details]
+                        # Extract search parameters
+                        from ..agents.query_extractor import query_extractor
+                        extraction_result = await query_extractor.run(deps.user_query)
+                        search_params = extraction_result.data
+                        
+                        # Search recipes
+                        recipes = await deps.spoonacular.complex_search(search_params)
+                        
+                        if recipes:
+                            recipe_dicts = [recipe.model_dump() for recipe in recipes]
                             
                             final_response = StreamResponse(
                                 type="complete",
-                                message=result,
+                                message=f"Found {len(recipe_dicts)} recipes matching '{search_params.query}'",
                                 recipes=recipe_dicts,
                                 summary={
                                     "query": deps.user_query,
@@ -251,13 +278,15 @@ async def chat_endpoint(body: ChatMessage):
                         recipes=[]
                     )
                     yield welcome_response.model_dump_json() + "\n"
+                    
         except Exception as e:
-            logfire.error(f"Unexcpected error in chat endpoint: {str(e)}", exc_info=True)
+            logfire.error(f"Unexpected error in chat endpoint: {str(e)}", exc_info=True)
             error_response = StreamResponse(
                 type="error",
                 message=f"An unexpected error occurred: {str(e)}"
             )
             yield error_response.model_dump_json() + "\n"
+            
     return StreamingResponse(
         stream_updates(),
         media_type="application/x-ndjson"

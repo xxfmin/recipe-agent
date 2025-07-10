@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Any, Dict
 from pydantic import BaseModel
 
 class ChatMessage(BaseModel):
@@ -11,3 +11,5 @@ class StreamResponse(BaseModel):
     status: Optional[str] = None
     message: Optional[str] = None
     recipes: Optional[List[dict]] = None
+    data: Optional[Dict[str, Any]] = None
+    summary: Optional[Dict[str, Any]] = None 
