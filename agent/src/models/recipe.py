@@ -96,7 +96,7 @@ class RecipeDetails(BaseModel):
     
 class RecipeSearchParams(BaseModel):
     query: str = Field(description="The main recipe search query")
-    number: int = Field(default=10, description="Number of results to return")
+    number: int = Field(default=50, description="Number of results to return")
     cuisine: Optional[str] = Field(default=None, description="The cuisine type")
     intolerances: Optional[str] = Field(default=None, description="Comma-separated list of intolerances")
     includeIngredients: Optional[str] = Field(default=None, description="Comma-separated list of ingredients that should be included")

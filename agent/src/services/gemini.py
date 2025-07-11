@@ -14,7 +14,20 @@ class GeminiService:
         self.api_key = api_key
         genai.configure(api_key=api_key)
         self.model = genai.GenerativeModel('gemini-2.5-flash')
-    
+
+    async def answer_question(self, question: str) -> str:
+        """
+        Use Gemini to answer a general cooking question.
+        """
+        try:
+            response = self.model.generate_content(question)
+            if not response.text:
+                raise Exception("Gemini returned empty response")
+            return response.text.strip()
+        except Exception as e:
+            logfire.error(f"Gemini Q&A error: {str(e)}")
+            raise Exception(f"Failed to answer question: {str(e)}")
+
     async def extract_ingredients_from_image(
         self, 
         image_base64: str

@@ -1,34 +1,76 @@
-from pydantic_ai import Agent
-from pydantic_ai.models.gemini import GeminiModel
+from .fridge_agent import FridgeAgent
+from .recipe_agent import RecipeAgent
+from .qa_agent import qa_agent
+from ..services.gemini import GeminiService
+from ..services.spoonacular import SpoonacularService
+from ..config import config
 
-from ..workflows.query_workflow import search_recipes_by_query
-from ..workflows.image_workflow import (
-    analyze_fridge_image,
-    format_ingredients_for_search,
-    search_recipes_by_ingredients,
-    get_recipe_details_for_ingredient_search
-)
+# initialize services and agents
+_gemini_service = GeminiService(config.GEMINI_API_KEY)
+_spoonacular_service = SpoonacularService(config.SPOONACULAR_API_KEY)
+_recipe_agent = RecipeAgent(_spoonacular_service)
+# FridgeAgent is initialized per request with deps
 
-from ..models.deps import Deps
+class Orchestrator:
+    async def run(self, *, image_base64=None, user_query=None, deps=None):
+        if image_base64:
+            agent = FridgeAgent(deps)
+            return agent.run(image_base64)  # returns an async generator
+        elif user_query:
+            # use LLM-based intent classification
+            try:
+                intent = await self.classify_intent_llm(user_query)
+            except Exception as e:
+                # fallback to keyword-based
+                intent = await self.classify_intent_keywords(user_query)
+            if intent == "fridge_image":
+                agent = FridgeAgent(deps)
+                return agent.run(image_base64)
+            elif intent == "recipe_search":
+                return await _recipe_agent.run(user_query)
+            elif intent == "general_qa":
+                result = await qa_agent.run(user_query)
+                return {
+                    "type": "complete",
+                    "message": result.data.answer,
+                    "recipes": []
+                }
+            else:
+                return {
+                    "type": "complete",
+                    "message": "Sorry, I didn't understand your request.",
+                    "recipes": []
+                }
+        else:
+            return {
+                "type": "complete",
+                "message": "Welcome to Recipe Agent! Upload a photo or ask a question.",
+                "recipes": []
+            }
 
-orchestrator = Agent(
-    model=GeminiModel(model_name="gemini-2.0-flash"),
-    deps_type=Deps,
-    result_type=str,
-    system_prompt="""
-    You help users find recipes through two methods:
-    1. Analyzing fridge images to find recipes based on available ingredients
-    2. Searching for specific recipes based on their requirements
+    async def classify_intent_llm(self, query: str) -> str:
+        """
+        Use Gemini LLM to classify the user query as 'fridge_image', 'recipe_search', or 'general_qa'.
+        """
+        prompt = (
+            "Classify the following user query as one of: 'fridge_image', 'recipe_search', 'general_qa'. "
+            "If the query is about uploading or analyzing a fridge image, return 'fridge_image'. "
+            "If it's about searching for a recipe, return 'recipe_search'. "
+            "If it's a general cooking question, return 'general_qa'. "
+            "Only return one of these three labels.\n"
+            f"Query: {query}"
+        )
+        response = await _gemini_service.answer_question(prompt)
+        # extract the first valid label from the response
+        for label in ["fridge_image", "recipe_search", "general_qa"]:
+            if label in response.lower():
+                return label
+        return "general_qa"  # fallback
 
-    Choose the appropriate workflow based on the input.
-    """
-)
+    async def classify_intent_keywords(self, query: str) -> str:
+        keywords = ["recipe", "how to make", "how do I cook", "make", "prepare", "ingredients for"]
+        if any(kw in query.lower() for kw in keywords):
+            return "recipe_search"
+        return "general_qa"
 
-# query workflow
-orchestrator.tool(search_recipes_by_query)
-
-# image analysis workflow
-orchestrator.tool(analyze_fridge_image)
-orchestrator.tool(format_ingredients_for_search)
-orchestrator.tool(search_recipes_by_ingredients)
-orchestrator.tool(get_recipe_details_for_ingredient_search)
+orchestrator = Orchestrator()
