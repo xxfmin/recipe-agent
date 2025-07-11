@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "motion/react";
 import { ImageProps } from "next/image";
+import { Recipe } from "@/types/recipe";
 
 export const useOutsideClick = <T extends HTMLElement = HTMLElement>(
   ref: React.RefObject<T | null>,
@@ -431,6 +432,7 @@ export const BlurImage = ({
             }
           : undefined
       }
+      {...rest}
     />
   );
 };

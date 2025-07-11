@@ -21,6 +21,10 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { ChatBubbleProps } from "@/types/chat";
+import { Recipe } from "@/types/recipe";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 // step config
 const WORKFLOW_STEPS = {
@@ -75,16 +79,16 @@ export function ChatBubble({
     if (!streamingData) return;
 
     // handle different message types
-    switch (streamingData.step) {
+    switch (streamingData.type) {
       case "step":
-        if (streamingData.status === "in_progress") {
+        if (streamingData.step && streamingData.status === "in_progress") {
           setActiveSteps((prev) => new Set(prev).add(streamingData.step!));
           setErrorSteps((prev) => {
             const next = new Set(prev);
             next.delete(streamingData.step!);
             return next;
           });
-        } else if (streamingData.status === "complete") {
+        } else if (streamingData.step && streamingData.status === "complete") {
           setActiveSteps((prev) => {
             const next = new Set(prev);
             next.delete(streamingData.step!);
@@ -255,44 +259,105 @@ export function ChatBubble({
                       <AccordionContent>
                         {/* step-specific content */}
                         {stepKey === "analyze_image" && data?.ingredients && (
-                          <div className="flex flex-wrap gap-1.5 pt-2">
-                            {data.ingredients
-                              .slice(0, 10)
-                              .map((ingredient: string, idx: number) => (
-                                <Badge
-                                  key={idx}
-                                  variant="secondary"
-                                  className="text-xs"
-                                >
-                                  {ingredient}
-                                </Badge>
-                              ))}
-                            {data.ingredients.length > 10 && (
-                              <span className="text-xs text-gray-500 ml-2">
-                                and {data.ingredients.length - 10} more...
-                              </span>
-                            )}
+                          <div className="pt-2">
+                            <p className="text-sm font-medium text-gray-700 mb-2">
+                              All ingredients found in your fridge:
+                            </p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {data.ingredients.map(
+                                (ingredient: string, idx: number) => (
+                                  <Badge
+                                    key={idx}
+                                    variant="secondary"
+                                    className="text-xs"
+                                  >
+                                    {ingredient}
+                                  </Badge>
+                                )
+                              )}
+                            </div>
                           </div>
                         )}
 
                         {stepKey === "format_ingredients" &&
                           streamingData?.summary
                             ?.ingredients_used_for_search && (
-                            <div className="text-sm text-gray-600 pt-2">
-                              Selected ingredients:{" "}
-                              {
-                                streamingData.summary
-                                  .ingredients_used_for_search
-                              }
+                            <div className="pt-2">
+                              <p className="text-sm font-medium text-gray-700 mb-2">
+                                Selected ingredients for recipe search:
+                              </p>
+                              <div className="flex flex-wrap gap-1.5">
+                                {streamingData.summary.ingredients_used_for_search
+                                  .split(",")
+                                  .map((ingredient: string, idx: number) => (
+                                    <Badge
+                                      key={idx}
+                                      variant="outline"
+                                      className="text-xs bg-green-50 border-green-200 text-green-700"
+                                    >
+                                      {ingredient.trim()}
+                                    </Badge>
+                                  ))}
+                              </div>
                             </div>
                           )}
 
-                        {stepKey === "search_recipes" &&
-                          streamingData?.message && (
-                            <div className="text-sm text-gray-600 pt-2">
-                              {streamingData.message}
+                        {stepKey === "search_recipes" && (
+                          <div className="pt-2">
+                            <p className="text-sm font-medium text-gray-700 mb-2">
+                              Recipe search optimization:
+                            </p>
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <span>•</span>
+                                <span>
+                                  Prioritizing recipes that use your ingredients
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <span>•</span>
+                                <span>
+                                  Minimizing additional ingredients needed
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <span>•</span>
+                                <span>
+                                  Found {stepData[stepKey]?.recipe_count || 0}{" "}
+                                  matching recipes
+                                </span>
+                              </div>
                             </div>
-                          )}
+                          </div>
+                        )}
+
+                        {stepKey === "get_details" && (
+                          <div className="pt-2">
+                            <p className="text-sm font-medium text-gray-700 mb-2">
+                              Recipe details retrieved:
+                            </p>
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <span>•</span>
+                                <span>Nutritional information</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <span>•</span>
+                                <span>Detailed ingredient lists</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <span>•</span>
+                                <span>Step-by-step instructions</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <span>•</span>
+                                <span>
+                                  Cooking times and preparation details
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
 
                         {stepKey === "search" && streamingData?.summary && (
                           <div className="text-sm text-gray-600 pt-2">
@@ -313,11 +378,18 @@ export function ChatBubble({
             )}
 
             {/* final message */}
-            {finalMessage && <p className="text-sm mb-4">{finalMessage}</p>}
+            {finalMessage && (
+              <div className="prose max-w-none mb-4">
+                <ReactMarkdown remarkPlugins={[remarkGfm as any]}>
+                  {finalMessage}
+                </ReactMarkdown>
+              </div>
+            )}
 
             {/* recipe carousel */}
             {finalRecipes.length > 0 && (
               <div className="mt-4">
+                <h3 className="text-lg font-semibold mb-3">Recipes Found</h3>
                 <Carousel
                   items={finalRecipes.map((recipe, index) => (
                     <RecipeCard key={recipe.id} recipe={recipe} index={index} />
@@ -326,10 +398,11 @@ export function ChatBubble({
               </div>
             )}
 
-            {/* simple message (no workflow) */}
+            {/* simple message (no workflow) - only show if no finalMessage */}
             {streamingData?.type === "complete" &&
               !showWorkflow &&
-              streamingData.message && (
+              streamingData.message &&
+              !finalMessage && (
                 <p className="text-sm">{streamingData.message}</p>
               )}
 

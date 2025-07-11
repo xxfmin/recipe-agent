@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ChatBubble } from "@/components/chat/chat-bubble";
 import { ImagePlus, Send, X } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
+import { ChatMessage, StreamData } from "@/types/chat";
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -15,12 +16,12 @@ export default function ChatPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when new messages arrive
+  // auto-scroll to bottom when new messages arrive
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Convert file to base64
+  // convert file to base64
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -35,7 +36,7 @@ export default function ChatPage() {
     if (file) {
       setSelectedImage(file);
 
-      // Create preview
+      // create preview
       const reader = new FileReader();
       reader.onload = (e) => {
         setImagePreview(e.target?.result as string);
@@ -109,7 +110,9 @@ export default function ChatPage() {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error("API Error:", response.status, errorText);
+        throw new Error(`HTTP error! status: ${response.status}: ${errorText}`);
       }
 
       const reader = response.body?.getReader();

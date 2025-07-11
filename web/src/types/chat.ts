@@ -1,4 +1,6 @@
-interface StreamData {
+import { Recipe } from "@/types/recipe";
+
+export interface StreamData {
   type: "step" | "complete" | "error";
   step?: string;
   status?: string;
@@ -7,6 +9,7 @@ interface StreamData {
   data?: {
     ingredients_count?: number;
     ingredients?: string[];
+    recipe_count?: number;
     [key: string]: any;
   };
   summary?: {
@@ -17,7 +20,7 @@ interface StreamData {
   };
 }
 
-interface ChatBubbleProps {
+export interface ChatBubbleProps {
   role: "user" | "assistant";
   message?: string;
   imagePreview?: string;
@@ -25,6 +28,6 @@ interface ChatBubbleProps {
   isLoading?: boolean;
 }
 
-interface ChatMessage extends ChatBubbleProps {
+export interface ChatMessage extends ChatBubbleProps {
   id: string;
 }

@@ -5,6 +5,7 @@ import { Clock, Users, Flame, Check, ChefHat, Utensils } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { RecipeCardProps, Recipe } from "@/types/recipe";
 
 export function RecipeCard({ recipe, index }: RecipeCardProps) {
   // Format the recipe data for the carousel card component

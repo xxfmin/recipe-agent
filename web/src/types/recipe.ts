@@ -1,4 +1,4 @@
-interface Recipe {
+export interface Recipe {
   id: number;
   title: string;
   image: string;
@@ -23,13 +23,23 @@ interface Recipe {
   }>;
   summary?: string;
   // for ingredient-based search
-  usedIngredients?: any[];
-  missedIngredients?: any[];
+  usedIngredients?: Array<{
+    id: number;
+    name: string;
+    amount: number;
+    unit: string;
+  }>;
+  missedIngredients?: Array<{
+    id: number;
+    name: string;
+    amount: number;
+    unit: string;
+  }>;
   usedIngredientCount?: number;
   missedIngredientCount?: number;
 }
 
-interface RecipeCardProps {
+export interface RecipeCardProps {
   recipe: Recipe;
   index: number;
 }
