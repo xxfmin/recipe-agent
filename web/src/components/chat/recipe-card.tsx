@@ -55,13 +55,22 @@ function RecipeCardContent({ recipe }: { recipe: Recipe }) {
 
     setIsLoading(true);
     try {
+      // ensure every ingredient has a 'unit' property as a string
+      const recipeToSave = {
+        ...recipe,
+        ingredients: recipe.ingredients.map((ing) => ({
+          ...ing,
+          unit: typeof ing.unit === "string" ? ing.unit : "",
+        })),
+      };
+
       const response = await fetch("/api/recipe", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify(recipe),
+        body: JSON.stringify(recipeToSave),
       });
 
       if (response.ok) {
