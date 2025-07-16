@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { PopularRecipes } from "@/components/dashboard/popular-recipes";
 
 export default function Dashboard() {
   return (
@@ -62,8 +63,8 @@ export default function Dashboard() {
           </button>
         </div>
 
-        <div className="bg-white rounded-3xl col-span-8 row-span-4 col-start-5 row-start-5 shadow-sm border border-gray-100 p-4">
-          3
+        <div className="bg-white rounded-3xl col-span-8 row-span-4 col-start-5 row-start-5 shadow-sm border border-gray-100 overflow-hidden">
+          <PopularRecipes />
         </div>
       </div>
 
@@ -81,8 +82,8 @@ export default function Dashboard() {
         <div className="bg-white rounded-3xl flex-1 min-h-[180px] shadow-sm border border-gray-100 p-4">
           4
         </div>
-        <div className="bg-white rounded-3xl flex-1 min-h-[200px] shadow-sm border border-gray-100 p-4">
-          5
+        <div className="bg-white rounded-3xl flex-1 min-h-[200px] shadow-sm border border-gray-100 overflow-hidden">
+          <PopularRecipes />
         </div>
         <div className="bg-white rounded-3xl flex-1 min-h-[160px] shadow-sm border border-gray-100 p-4">
           6
