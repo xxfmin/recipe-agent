@@ -32,12 +32,12 @@ export default function Dashboard() {
     <div className="h-screen w-full p-4 bg-gray-50">
       <div className="hidden md:grid md:grid-cols-12 md:grid-rows-8 gap-4 h-full">
         <div className="bg-white rounded-3xl col-span-4 row-span-2 col-start-1 row-start-1 shadow-sm border p-8 flex items-center h-full overflow-hidden relative">
-          {/* Decorative elements */}
+          {/* decorative elements */}
           <div className="absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-orange-200/20 to-pink-200/20 rounded-full blur-3xl" />
           <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-gradient-to-tr from-yellow-200/20 to-orange-200/20 rounded-full blur-2xl" />
 
           <div className="flex items-center gap-6 w-full relative z-10">
-            {/* Icon bubble */}
+            {/* icon bubble */}
             <div className="relative">
               <div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-6 transition-transform duration-300">
                 <span className="text-3xl transform -rotate-3">👋</span>
@@ -45,7 +45,7 @@ export default function Dashboard() {
               <div className="absolute -bottom-1 -right-1 w-16 h-16 bg-gradient-to-br from-orange-300/30 to-pink-400/30 rounded-2xl -z-10" />
             </div>
 
-            {/* Greeting text */}
+            {/* greeting text */}
             <div className="flex flex-col">
               <h2 className="text-2xl font-bold text-gray-900 mb-1">
                 {getGreeting()},
@@ -92,9 +92,9 @@ export default function Dashboard() {
             Upload photos of handwritten recipes or cookbook pages
           </p>
 
-          {/* Upload area */}
+          {/* upload area */}
           <div className="flex-1 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center p-6 hover:border-gray-300 transition-colors cursor-pointer group bg-gray-50/50">
-            <div className="w-16 h-16 bg-gray-900 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+            <div className="w-16 h-16 bg-gray-900 rounded-2xl flex items-center justify-center mb-4">
               <svg
                 className="w-8 h-8 text-white"
                 fill="none"

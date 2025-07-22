@@ -456,7 +456,7 @@ export const PopularRecipes = () => {
           ) : error || recipes.length < 2 ? (
             <div className="flex h-full items-center justify-center p-4">
               <p className="text-sm text-gray-500 text-center">
-                Unable to load enough recipes
+                Unable to load recipes
               </p>
             </div>
           ) : (
@@ -601,7 +601,7 @@ export const PopularRecipes = () => {
                           onClick={() =>
                             handleRecipeClick(testimonials[active].recipe)
                           }
-                          className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors text-xs font-medium"
+                          className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors text-xs font-medium cursor-pointer"
                         >
                           View Recipe
                         </button>
@@ -616,7 +616,7 @@ export const PopularRecipes = () => {
                             "px-4 py-2 rounded-lg transition-colors text-xs font-medium",
                             savedRecipes.has(testimonials[active].recipe.id)
                               ? "bg-green-100 border border-green-200 text-green-700"
-                              : "border border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50"
+                              : "border border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50 cursor-pointer"
                           )}
                         >
                           {savedRecipes.has(testimonials[active].recipe.id) ? (

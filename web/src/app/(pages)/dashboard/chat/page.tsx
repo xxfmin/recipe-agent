@@ -223,9 +223,15 @@ export default function ChatPage() {
       {/* chat container */}
       <div className="flex-1 overflow-hidden flex flex-col max-w-4xl mx-auto w-full">
         {/* chat messages */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        <div
+          className={`flex-1 p-6 space-y-4 ${
+            messages.length > 0
+              ? "overflow-y-auto"
+              : "flex items-center justify-center"
+          }`}
+        >
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center">
+            <div className="flex flex-col items-center justify-center text-center w-full">
               <div className="mb-4">
                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
                   <ImagePlus className="w-8 h-8 text-gray-400" />
@@ -258,7 +264,7 @@ export default function ChatPage() {
         {/* input form */}
         <form
           onSubmit={handleSubmit}
-          className="flex-none border-t bg-white p-6 space-y-2"
+          className="flex-none bg-transparent px-4 pb-4 pt-2"
         >
           {/* image preview */}
           {imagePreview && (
@@ -278,8 +284,8 @@ export default function ChatPage() {
             </div>
           )}
 
-          {/* input row */}
-          <div className="flex gap-2">
+          {/* input row with buttons on top and textarea below */}
+          <div className="flex items-end gap-2 rounded-xl bg-white shadow px-4 py-2 mb-2">
             <Input
               type="file"
               ref={fileInputRef}
@@ -293,19 +299,28 @@ export default function ChatPage() {
               size="icon"
               onClick={() => fileInputRef.current?.click()}
               disabled={isStreaming}
+              className="self-end"
             >
               <ImagePlus className="w-5 h-5" />
             </Button>
-            <Input
+            <textarea
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               placeholder="Ask about recipes or upload a fridge photo..."
               disabled={isStreaming}
-              className="flex-1"
+              rows={1}
+              className="flex-1 border-none shadow-none focus:ring-0 resize-none bg-transparent outline-none min-h-[40px] max-h-40 py-2 px-2 text-base"
+              style={{ overflow: "hidden" }}
+              onInput={(e) => {
+                const target = e.target as HTMLTextAreaElement;
+                target.style.height = "auto";
+                target.style.height = `${target.scrollHeight}px`;
+              }}
             />
             <Button
               type="submit"
               disabled={isStreaming || (!inputMessage.trim() && !selectedImage)}
+              className="self-end"
             >
               <Send className="w-5 h-5" />
             </Button>
